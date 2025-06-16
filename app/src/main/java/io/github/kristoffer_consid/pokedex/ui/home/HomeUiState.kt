@@ -10,6 +10,7 @@ enum class ResultType {
 data class HomeUIState(
     val isLoaded: Boolean = false,
     val pokemonList: List<NamedApiResource> = emptyList(),
+    val randomPokemons: Triple<NamedApiResource, NamedApiResource, NamedApiResource>? = null,
 
     val errorMessages: List<String> = emptyList()
 ) {

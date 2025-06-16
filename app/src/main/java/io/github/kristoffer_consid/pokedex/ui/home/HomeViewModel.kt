@@ -1,6 +1,5 @@
 package io.github.kristoffer_consid.pokedex.ui.home
 
-import androidx.compose.runtime.MutableState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.pokeapi.pokekotlin.PokeApi
@@ -27,15 +26,34 @@ class HomeViewModel @Inject constructor(
         loadPokemonList()
     }
 
+    fun refreshRandomPokemon() {
+        val pokemonList = viewModelState.value.pokemonList
+        if (pokemonList.isEmpty()) {
+            return
+        }
+
+        viewModelState.update {
+            it.copy(
+                randomPokemons = Triple(
+                    pokemonList.random(),
+                    pokemonList.random(),
+                    pokemonList.random()
+                )
+            )
+        }
+    }
+
     private fun loadPokemonList() {
         viewModelScope.launch {
             //  The response object is about 75 kB (at the time of writing) and a non-cached
             //  response takes about 34 ms so there's no real need to use pagination here
-            val result = PokeApi.getPokemonList(0, 10000)
+            val result = PokeApi.getPokemonSpeciesList(0, 10000)
 
             viewModelState.update {
                 it.processResult(ResultType.POKEMON_LIST, result)
             }
+
+            refreshRandomPokemon()
         }
     }
 }
