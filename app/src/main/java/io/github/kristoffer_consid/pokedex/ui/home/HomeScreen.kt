@@ -48,6 +48,9 @@ import com.ramcosta.composedestinations.annotation.RootGraph
 import com.ramcosta.composedestinations.generated.destinations.DetailsScreenDestination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import io.github.kristoffer_consid.pokedex.R
+import org.apache.commons.text.similarity.JaroWinklerSimilarity
+
+const val FUZZY_THRESHOLD = 0.8
 
 @Destination<RootGraph>(start = true)
 @Composable
@@ -59,8 +62,7 @@ fun HomeScreen(navigator: DestinationsNavigator) {
         HomeDisplay(uiState) { pokemonInfo ->
             navigator.navigate(DetailsScreenDestination(pokemonInfo))
         }
-    }
-    else {
+    } else {
         LoadingScreen()
     }
 }
@@ -72,12 +74,25 @@ fun HomeDisplay(
     onClick: (NamedApiResource) -> Unit = {}
 ) {
     var query by remember { mutableStateOf("") }
+
     val filtered = remember(query) {
         if (query.isBlank()) {
             uiState.pokemonList
-        }
-        else {
-            uiState.pokemonList.filter { it.name.contains(query, ignoreCase = true) }
+        } else {
+            val similarity = JaroWinklerSimilarity()
+            val lowercaseQuery = query.lowercase()
+
+            // Fuzzy search pokemon name with Jaro-Winkler
+            uiState.pokemonList
+                .map { pokemon ->
+                    pokemon to similarity.apply(pokemon.name.lowercase(), lowercaseQuery)
+                }
+                .filter {
+                    it.first.name.lowercase()
+                        .contains(lowercaseQuery) || it.second >= FUZZY_THRESHOLD
+                }
+                .sortedByDescending { it.second }
+                .map { it.first }
         }
     }
 
@@ -143,7 +158,8 @@ fun PokeHeader(
             randomPokemons.first,
             Modifier
                 .fillMaxWidth()
-                .weight(1f).padding(
+                .weight(1f)
+                .padding(
                     bottom = 16.dp
                 ),
             onClick = onClick
@@ -151,7 +167,9 @@ fun PokeHeader(
 
         RandomPokemon(
             randomPokemons.second,
-            Modifier.fillMaxWidth().weight(1f),
+            Modifier
+                .fillMaxWidth()
+                .weight(1f),
             onClick = onClick
         )
 
@@ -159,7 +177,8 @@ fun PokeHeader(
             randomPokemons.third,
             Modifier
                 .fillMaxWidth()
-                .weight(1f).padding(
+                .weight(1f)
+                .padding(
                     bottom = 16.dp
                 ),
             onClick = onClick
@@ -184,8 +203,7 @@ fun RandomPokemon(
                     painter = painterResource(R.drawable.pokeball),
                     contentDescription = pokemon.name,
                 )
-            }
-            else {
+            } else {
                 AsyncImage(
                     model = ImageRequest.Builder(LocalContext.current)
                         .data("https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemon.id}.png")
@@ -245,8 +263,7 @@ fun GridCell(
                         painter = painterResource(R.drawable.pokeball),
                         contentDescription = pokemon.name,
                     )
-                }
-                else {
+                } else {
                     AsyncImage(
                         model = ImageRequest.Builder(LocalContext.current)
                             .data("https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemon.id}.png")

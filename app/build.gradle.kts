@@ -72,4 +72,6 @@ dependencies {
     implementation(libs.coil.network.okhttp)
 
     implementation(libs.pokekotlin)
+
+    implementation(libs.commons.text)
 }
