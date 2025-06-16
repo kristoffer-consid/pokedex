@@ -1,12 +1,10 @@
 package io.github.kristoffer_consid.pokedex.ui.home
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -15,8 +13,6 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -49,16 +45,20 @@ import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.RootGraph
+import com.ramcosta.composedestinations.generated.destinations.DetailsScreenDestination
+import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import io.github.kristoffer_consid.pokedex.R
 
 @Destination<RootGraph>(start = true)
 @Composable
-fun HomeScreen() {
+fun HomeScreen(navigator: DestinationsNavigator) {
     val viewModel: HomeViewModel = hiltViewModel()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     if (uiState.isLoaded) {
-        HomeDisplay(uiState)
+        HomeDisplay(uiState) { pokemonInfo ->
+            navigator.navigate(DetailsScreenDestination(pokemonInfo))
+        }
     }
     else {
         LoadingScreen()
@@ -66,7 +66,11 @@ fun HomeScreen() {
 }
 
 @Composable
-fun HomeDisplay(uiState: HomeUIState, modifier: Modifier = Modifier) {
+fun HomeDisplay(
+    uiState: HomeUIState,
+    modifier: Modifier = Modifier,
+    onClick: (NamedApiResource) -> Unit = {}
+) {
     var query by remember { mutableStateOf("") }
     val filtered = remember(query) {
         if (query.isBlank()) {
@@ -86,7 +90,7 @@ fun HomeDisplay(uiState: HomeUIState, modifier: Modifier = Modifier) {
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         item(span = { GridItemSpan(maxCurrentLineSpan) }) {
-            PokeHeader(uiState.randomPokemons)
+            PokeHeader(uiState.randomPokemons, onClick = onClick)
         }
 
         stickyHeader {
@@ -111,7 +115,8 @@ fun HomeDisplay(uiState: HomeUIState, modifier: Modifier = Modifier) {
         items(filtered, key = { it.id }) { pokemon ->
             GridCell(
                 pokemon,
-                Modifier.padding(2.dp)
+                Modifier.padding(2.dp),
+                onClick = onClick
             )
         }
     }
@@ -120,7 +125,8 @@ fun HomeDisplay(uiState: HomeUIState, modifier: Modifier = Modifier) {
 @Composable
 fun PokeHeader(
     randomPokemons: Triple<NamedApiResource, NamedApiResource, NamedApiResource>?,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onClick: (NamedApiResource) -> Unit = {}
 ) {
     if (randomPokemons == null) {
         return
@@ -139,12 +145,14 @@ fun PokeHeader(
                 .fillMaxWidth()
                 .weight(1f).padding(
                     bottom = 16.dp
-                )
+                ),
+            onClick = onClick
         )
 
         RandomPokemon(
             randomPokemons.second,
-            Modifier.fillMaxWidth().weight(1f)
+            Modifier.fillMaxWidth().weight(1f),
+            onClick = onClick
         )
 
         RandomPokemon(
@@ -153,41 +161,47 @@ fun PokeHeader(
                 .fillMaxWidth()
                 .weight(1f).padding(
                     bottom = 16.dp
-                )
+                ),
+            onClick = onClick
         )
     }
 }
 
 @Composable
-fun RandomPokemon(pokemon: NamedApiResource, modifier: Modifier = Modifier) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
+fun RandomPokemon(
+    pokemon: NamedApiResource,
+    modifier: Modifier = Modifier,
+    onClick: (NamedApiResource) -> Unit = {}
+) {
+    Surface(
+        onClick = { onClick(pokemon) },
         modifier = modifier
     ) {
-        // TODO: get LocalAsyncImagePreviewHandler to work so we won't need this
-        if (LocalInspectionMode.current) {
-            Image(
-                painter = painterResource(R.drawable.pokeball),
-                contentDescription = pokemon.name,
-            )
-        }
-        else {
-            AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data("https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemon.id}.png")
-                    .crossfade(true)
-                    .build(),
-                placeholder = painterResource(R.drawable.pokeball),
-                contentDescription = pokemon.name,
-            )
-        }
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            // TODO: get LocalAsyncImagePreviewHandler to work so we won't need this
+            if (LocalInspectionMode.current) {
+                Image(
+                    painter = painterResource(R.drawable.pokeball),
+                    contentDescription = pokemon.name,
+                )
+            }
+            else {
+                AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data("https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemon.id}.png")
+                        .crossfade(true)
+                        .build(),
+                    placeholder = painterResource(R.drawable.pokeball),
+                    contentDescription = pokemon.name,
+                )
+            }
 
-        Text(
-            pokemon.name.replaceFirstChar { it.uppercase() },
-            style = MaterialTheme.typography.titleLarge
-        )
+            Text(
+                pokemon.name.replaceFirstChar { it.uppercase() },
+                style = MaterialTheme.typography.titleLarge
+            )
+        }
     }
-
 }
 
 @OptIn(ExperimentalCoilApi::class)
@@ -207,38 +221,47 @@ fun PokeHeaderPreview() {
 }
 
 @Composable
-fun GridCell(pokemon: NamedApiResource, modifier: Modifier = Modifier) {
-    Column(modifier = modifier) {
-        Text(
-            "#${pokemon.id}",
-            style = MaterialTheme.typography.titleMedium
-        )
-
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            // TODO: get LocalAsyncImagePreviewHandler to work so we won't need this
-            if (LocalInspectionMode.current) {
-                Image(
-                    painter = painterResource(R.drawable.pokeball),
-                    contentDescription = pokemon.name,
-                )
-            }
-            else {
-                AsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data("https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemon.id}.png")
-                        .crossfade(true)
-                        .build(),
-                    placeholder = painterResource(R.drawable.pokeball),
-                    contentDescription = pokemon.name
-                )
-            }
-
+fun GridCell(
+    pokemon: NamedApiResource,
+    modifier: Modifier = Modifier,
+    onClick: (NamedApiResource) -> Unit = {}
+) {
+    Surface(
+        modifier = modifier,
+        onClick = { onClick(pokemon) }
+    ) {
+        Column {
             Text(
-                pokemon.name.replaceFirstChar { it.uppercase() },
-                style = MaterialTheme.typography.titleMedium,
+                "#${pokemon.id}",
+                style = MaterialTheme.typography.titleMedium
             )
+
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // TODO: get LocalAsyncImagePreviewHandler to work so we won't need this
+                if (LocalInspectionMode.current) {
+                    Image(
+                        painter = painterResource(R.drawable.pokeball),
+                        contentDescription = pokemon.name,
+                    )
+                }
+                else {
+                    AsyncImage(
+                        model = ImageRequest.Builder(LocalContext.current)
+                            .data("https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemon.id}.png")
+                            .crossfade(true)
+                            .build(),
+                        placeholder = painterResource(R.drawable.pokeball),
+                        contentDescription = pokemon.name
+                    )
+                }
+
+                Text(
+                    pokemon.name.replaceFirstChar { it.uppercase() },
+                    style = MaterialTheme.typography.titleMedium,
+                )
+            }
         }
     }
 }

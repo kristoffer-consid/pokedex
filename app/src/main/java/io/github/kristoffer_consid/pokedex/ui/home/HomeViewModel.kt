@@ -12,9 +12,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class HomeViewModel @Inject constructor(
-
-): ViewModel() {
+class HomeViewModel @Inject constructor(): ViewModel() {
     private val viewModelState = MutableStateFlow(HomeUIState())
     val uiState = viewModelState.stateIn(
         viewModelScope,

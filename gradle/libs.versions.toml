@@ -8,6 +8,7 @@ coreKtx = "1.16.0"
 junit = "4.13.2"
 junitVersion = "1.2.1"
 espressoCore = "3.6.1"
+kotlinxSerializationJson = "1.8.1"
 lifecycleRuntimeKtx = "2.9.1"
 activityCompose = "1.10.1"
 composeBom = "2025.06.00"
@@ -35,6 +36,7 @@ androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
 composeDestinations-core = { module = "io.github.raamcosta.compose-destinations:core", version.ref = "composeDestination" }
 composeDestinations-ksp = { module = "io.github.raamcosta.compose-destinations:ksp", version.ref = "composeDestination" }
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 pokekotlin = { module = "co.pokeapi.pokekotlin:pokekotlin", version = "3.0.0-pre2" }
 
 [plugins]
