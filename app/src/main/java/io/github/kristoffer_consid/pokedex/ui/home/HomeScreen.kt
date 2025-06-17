@@ -160,7 +160,7 @@ fun PokeHeader(
                 .fillMaxWidth()
                 .weight(1f)
                 .padding(
-                    bottom = 16.dp
+                    bottom = 24.dp
                 ),
             onClick = onClick
         )
@@ -179,7 +179,7 @@ fun PokeHeader(
                 .fillMaxWidth()
                 .weight(1f)
                 .padding(
-                    bottom = 16.dp
+                    bottom = 24.dp
                 ),
             onClick = onClick
         )
@@ -284,7 +284,7 @@ fun GridCell(
 }
 
 @OptIn(ExperimentalCoilApi::class)
-@Preview(showBackground = true)
+@Preview(showBackground = true, widthDp = 100)
 @Composable
 fun GridCellPreview() {
     CompositionLocalProvider(LocalAsyncImagePreviewHandler provides previewHandler) {

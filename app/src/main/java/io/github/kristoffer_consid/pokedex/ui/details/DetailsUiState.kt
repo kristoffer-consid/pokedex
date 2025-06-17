@@ -1,16 +1,20 @@
 package io.github.kristoffer_consid.pokedex.ui.details
 
+import co.pokeapi.pokekotlin.model.EvolutionChain
 import co.pokeapi.pokekotlin.model.NamedApiResource
 import co.pokeapi.pokekotlin.model.PokemonSpecies
 
 enum class ResultType {
-    SPECIES
+    SPECIES,
+    EVOLUTION_CHAIN,
 }
 
 data class DetailsUiState(
     val pokemonInfo: NamedApiResource,
     val isLoading: Boolean = true,
+
     val species: PokemonSpecies? = null,
+    val evolutionChain: EvolutionChain? = null,
 
     val errorMessages: List<String> = emptyList(),
 ) {
@@ -18,8 +22,11 @@ data class DetailsUiState(
         onSuccess = { data ->
             when (type) {
                 ResultType.SPECIES -> this.copy(
-                    isLoading = false,
                     species = data as PokemonSpecies
+                )
+
+                ResultType.EVOLUTION_CHAIN -> this.copy(
+                    evolutionChain = data as EvolutionChain
                 )
             }
         },

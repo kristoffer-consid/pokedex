@@ -34,10 +34,26 @@ class DetailsViewModel @AssistedInject constructor(
 
     fun loadPokemonDetailedData() {
         viewModelScope.launch {
+            // Get species details
             val result = PokeApi.getPokemonSpecies(viewModelState.value.pokemonInfo.id)
-
             viewModelState.update {
                 it.processResult(ResultType.SPECIES, result)
+            }
+
+            // Get evolution chain
+            val evolutionId = result.getOrNull()?.id
+            if (evolutionId !== null) {
+                val result = PokeApi.getEvolutionChain(evolutionId)
+                viewModelState.update {
+                    it.processResult(ResultType.EVOLUTION_CHAIN, result)
+                }
+            }
+
+            // Finished loading
+            viewModelState.update {
+                it.copy(
+                    isLoading = false
+                )
             }
         }
     }
