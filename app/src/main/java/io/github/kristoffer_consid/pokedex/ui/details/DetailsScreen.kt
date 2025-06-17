@@ -1,27 +1,19 @@
 package io.github.kristoffer_consid.pokedex.ui.details
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.layout.wrapContentWidth
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -31,7 +23,6 @@ import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardColors
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CardDefaults.cardElevation
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -41,9 +32,8 @@ import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
-import androidx.compose.material3.carousel.HorizontalMultiBrowseCarousel
-import androidx.compose.material3.carousel.rememberCarouselState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -53,16 +43,12 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import co.pokeapi.pokekotlin.model.ChainLink
 import co.pokeapi.pokekotlin.model.EvolutionChain
-import co.pokeapi.pokekotlin.model.EvolutionDetail
-import co.pokeapi.pokekotlin.model.EvolutionTrigger
 import co.pokeapi.pokekotlin.model.NamedApiResource
 import co.pokeapi.pokekotlin.model.PokemonSpecies
 import coil3.compose.AsyncImage
@@ -73,6 +59,7 @@ import com.ramcosta.composedestinations.annotation.RootGraph
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import io.github.kristoffer_consid.pokedex.R
 import io.github.kristoffer_consid.pokedex.data.PreviewSpecies
+import io.github.kristoffer_consid.pokedex.ui.theme.background
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -100,14 +87,14 @@ fun DetailsScreen(navigator: DestinationsNavigator, pokemonInfo: NamedApiResourc
                             Icon(
                                 Icons.Filled.Favorite,
                                 contentDescription = "Favourite",
-                                tint = MaterialTheme.colorScheme.primary
+                                tint = MaterialTheme.colorScheme.onPrimary
                             )
                         }
                         else {
                             Icon(
                                 Icons.Outlined.FavoriteBorder,
                                 contentDescription = "Not favourite",
-                                tint = MaterialTheme.colorScheme.primary
+                                tint = MaterialTheme.colorScheme.onPrimary
                             )
                         }
                     }
@@ -137,16 +124,20 @@ fun AppBar(
     actions: @Composable RowScope.() -> Unit = {}
 ) {
     CenterAlignedTopAppBar(
-        modifier = modifier,
+        modifier = modifier.background(MaterialTheme.colorScheme.primary),
         actions = actions,
         title = { Text(text = title) },
         scrollBehavior = scrollBehavior,
         windowInsets = WindowInsets(0.dp),
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = MaterialTheme.colorScheme.primary
+        ),
         navigationIcon = {
             IconButton(onClick = onBackClick) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Localized description"
+                    contentDescription = "Localized description",
+                    tint = MaterialTheme.colorScheme.onPrimary
                 )
             }
         }
@@ -226,12 +217,16 @@ fun InfoCard(pokemonSpecies: PokemonSpecies, modifier: Modifier = Modifier) {
     // TODO: Replace with text carousel
     Card(modifier = modifier
         .fillMaxWidth()
-        .wrapContentHeight()
+        .wrapContentHeight(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondary
+        )
     ) {
         Text(
             flavourText,
             style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.padding(12.dp)
+            modifier = Modifier.padding(12.dp),
+            color = MaterialTheme.colorScheme.onSecondary
         )
     }
 }
@@ -252,7 +247,10 @@ fun EvolutionCard(evolutionChain: EvolutionChain?, modifier: Modifier = Modifier
 
     Card(modifier = modifier
         .fillMaxWidth()
-        .wrapContentHeight()
+        .wrapContentHeight(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondary
+        )
     ) {
         Column(
             verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -302,18 +300,20 @@ fun EvolutionPart(
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(
                     start = 16.dp
-                ))
+                ),
+                color = MaterialTheme.colorScheme.onSecondary
+            )
 
             Card(
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer
                 ),
                 modifier = Modifier
                     .padding(
                         start = 16.dp,
                         end = 16.dp
                     )
-                    .fillMaxWidth()
+                    .fillMaxWidth(),
             ) {
                 Row(
                     horizontalArrangement = Arrangement.SpaceEvenly,
@@ -342,7 +342,7 @@ fun EvolutionPart(
                     Icon(
                         Icons.Default.ArrowForward,
                         contentDescription = "Evolves to",
-                        tint = MaterialTheme.colorScheme.primary
+                        tint = MaterialTheme.colorScheme.secondary
                     )
 
                     val nextPokemon = evolution.species

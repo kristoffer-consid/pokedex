@@ -1,7 +1,7 @@
 package io.github.kristoffer_consid.pokedex.ui.home
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.gestures.scrollBy
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,7 +14,8 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.outlined.FavoriteBorder
@@ -24,6 +25,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -37,6 +39,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
@@ -49,7 +53,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import co.pokeapi.pokekotlin.model.NamedApiResource
 import coil3.ColorImage
 import coil3.annotation.ExperimentalCoilApi
@@ -65,7 +68,6 @@ import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import io.github.kristoffer_consid.pokedex.R
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.yield
 import org.apache.commons.text.similarity.JaroWinklerSimilarity
 
 const val FUZZY_THRESHOLD = 0.8
@@ -144,12 +146,16 @@ fun HomeDisplay(
         },
         modifier = modifier
             .fillMaxSize()
-            .padding(8.dp),
+            .background(MaterialTheme.colorScheme.primary)
     ) {
         LazyVerticalGrid(
             columns = GridCells.Fixed(3),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(
+                start = 8.dp,
+                end = 8.dp
+            )
         ) {
             item(span = { GridItemSpan(maxCurrentLineSpan) }) {
                 PokeHeader(uiState.randomPokemons, onClick = onClick)
@@ -173,19 +179,28 @@ fun HomeDisplay(
                                     Icon(
                                         Icons.Filled.Favorite,
                                         contentDescription = "Favourite",
-                                        tint = MaterialTheme.colorScheme.primary
+                                        tint = MaterialTheme.colorScheme.onPrimary
                                     )
                                 }
                                 else {
                                     Icon(
                                         Icons.Outlined.FavoriteBorder,
                                         contentDescription = "Not favourite",
-                                        tint = MaterialTheme.colorScheme.primary
+                                        tint = MaterialTheme.colorScheme.onPrimary
                                     )
                                 }
                             }
                         },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = MaterialTheme.colorScheme.onPrimary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.onPrimary,
+                            focusedTextColor = MaterialTheme.colorScheme.onPrimary,
+                            unfocusedTextColor = MaterialTheme.colorScheme.onPrimary,
+                            focusedPlaceholderColor = MaterialTheme.colorScheme.onPrimary,
+                            unfocusedPlaceholderColor = MaterialTheme.colorScheme.onPrimary,
+                        ),
                         modifier = Modifier
+                            .background(MaterialTheme.colorScheme.primary)
                             .fillMaxWidth()
                             .padding(
                                 bottom = 8.dp,
@@ -219,7 +234,9 @@ fun PokeHeader(
     Row(
         modifier = modifier
             .height(200.dp)
-            .fillMaxWidth(),
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
+            .background(Color.White),
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -314,17 +331,21 @@ fun GridCell(
     onClick: (NamedApiResource) -> Unit = {}
 ) {
     Surface(
-        modifier = modifier,
+        modifier = modifier
+            .background(MaterialTheme.colorScheme.primary),
         onClick = { onClick(pokemon) }
     ) {
-        Column {
+        Column(modifier = Modifier.background(MaterialTheme.colorScheme.primary)) {
             Text(
                 "#${pokemon.id}",
-                style = MaterialTheme.typography.titleMedium
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.background(MaterialTheme.colorScheme.primary),
+                color = MaterialTheme.colorScheme.onPrimary
             )
 
             Column(
-                horizontalAlignment = Alignment.CenterHorizontally
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.background(MaterialTheme.colorScheme.primary)
             ) {
                 // TODO: get LocalAsyncImagePreviewHandler to work so we won't need this
                 if (LocalInspectionMode.current) {
@@ -339,13 +360,18 @@ fun GridCell(
                             .crossfade(true)
                             .build(),
                         placeholder = painterResource(R.drawable.pokeball),
-                        contentDescription = pokemon.name
+                        contentDescription = pokemon.name,
+                        modifier = Modifier
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.primaryContainer)
                     )
                 }
 
                 Text(
                     pokemon.name.replaceFirstChar { it.uppercase() },
                     style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.background(MaterialTheme.colorScheme.primary),
+                    color = MaterialTheme.colorScheme.onPrimary
                 )
             }
         }

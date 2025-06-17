@@ -77,4 +77,6 @@ dependencies {
 
     implementation(libs.pokekotlin)
     implementation(libs.commons.text)
+
+    implementation(libs.accompanist.systemuicontroller)
 }
