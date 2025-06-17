@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.pokeapi.pokekotlin.PokeApi
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.github.kristoffer_consid.pokedex.data.pokemon.FavoritesRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
@@ -12,7 +13,9 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class HomeViewModel @Inject constructor(): ViewModel() {
+class HomeViewModel @Inject constructor(
+    private val favoritesRepository: FavoritesRepository
+): ViewModel() {
     private val viewModelState = MutableStateFlow(HomeUIState())
     val uiState = viewModelState.stateIn(
         viewModelScope,
@@ -22,6 +25,7 @@ class HomeViewModel @Inject constructor(): ViewModel() {
 
     init {
         loadPokemonList()
+        loadFavorites()
     }
 
     fun refreshRandomPokemon() {
@@ -40,6 +44,15 @@ class HomeViewModel @Inject constructor(): ViewModel() {
             )
         }
     }
+
+
+    fun loadFavorites() {
+        viewModelScope.launch {
+            val result = favoritesRepository.getFavorites()
+            viewModelState.update { it.processResult(ResultType.FAVORITES, result) }
+        }
+    }
+
 
     private fun loadPokemonList() {
         viewModelScope.launch {

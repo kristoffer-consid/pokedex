@@ -13,13 +13,21 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -34,7 +42,10 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import co.pokeapi.pokekotlin.model.NamedApiResource
 import coil3.ColorImage
 import coil3.annotation.ExperimentalCoilApi
@@ -58,6 +69,13 @@ fun HomeScreen(navigator: DestinationsNavigator) {
     val viewModel: HomeViewModel = hiltViewModel()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
+    val lifecycleOwner = LocalLifecycleOwner.current
+    LaunchedEffect(lifecycleOwner) {
+        lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            viewModel.loadFavorites()
+        }
+    }
+
     if (uiState.isLoaded) {
         HomeDisplay(uiState) { pokemonInfo ->
             navigator.navigate(DetailsScreenDestination(pokemonInfo))
@@ -67,6 +85,7 @@ fun HomeScreen(navigator: DestinationsNavigator) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeDisplay(
     uiState: HomeUIState,
@@ -74,16 +93,20 @@ fun HomeDisplay(
     onClick: (NamedApiResource) -> Unit = {}
 ) {
     var query by remember { mutableStateOf("") }
+    var showFavorites by remember { mutableStateOf(false) }
+    var pokemonList = uiState.pokemonList.filter {
+        !showFavorites || uiState.favorites.contains(it.id)
+    }
 
-    val filtered = remember(query) {
+    val filtered = remember(query, showFavorites) {
         if (query.isBlank()) {
-            uiState.pokemonList
+            pokemonList
         } else {
             val similarity = JaroWinklerSimilarity()
             val lowercaseQuery = query.lowercase()
 
             // Fuzzy search pokemon name with Jaro-Winkler
-            uiState.pokemonList
+            pokemonList
                 .map { pokemon ->
                     pokemon to similarity.apply(pokemon.name.lowercase(), lowercaseQuery)
                 }
@@ -96,43 +119,69 @@ fun HomeDisplay(
         }
     }
 
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(4),
+    PullToRefreshBox(
+        isRefreshing = false,
+        onRefresh = {},
         modifier = modifier
             .fillMaxSize()
             .padding(8.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        item(span = { GridItemSpan(maxCurrentLineSpan) }) {
-            PokeHeader(uiState.randomPokemons, onClick = onClick)
-        }
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(4),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            item(span = { GridItemSpan(maxCurrentLineSpan) }) {
+                PokeHeader(uiState.randomPokemons, onClick = onClick)
+            }
 
-        stickyHeader {
-            Surface(
-                tonalElevation = 4.dp,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                OutlinedTextField(
-                    value = query,
-                    onValueChange = { query = it },
-                    placeholder = { Text("Search…") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(
-                            bottom = 8.dp,
-                            top = 8.dp
-                        )
+            stickyHeader {
+                Surface(
+                    tonalElevation = 4.dp,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    OutlinedTextField(
+                        value = query,
+                        onValueChange = { query = it },
+                        placeholder = { Text("Search…") },
+                        trailingIcon = {
+                            IconToggleButton(
+                                checked = showFavorites,
+                                onCheckedChange = { showFavorites = it }
+                            ) {
+                                if (showFavorites) {
+                                    Icon(
+                                        Icons.Filled.Favorite,
+                                        contentDescription = "Favourite",
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                                else {
+                                    Icon(
+                                        Icons.Outlined.FavoriteBorder,
+                                        contentDescription = "Not favourite",
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(
+                                bottom = 8.dp,
+                                top = 8.dp
+                            )
+                    )
+                }
+            }
+
+            items(filtered, key = { it.id }) { pokemon ->
+                GridCell(
+                    pokemon,
+                    Modifier.padding(2.dp),
+                    onClick = onClick
                 )
             }
-        }
-
-        items(filtered, key = { it.id }) { pokemon ->
-            GridCell(
-                pokemon,
-                Modifier.padding(2.dp),
-                onClick = onClick
-            )
         }
     }
 }
