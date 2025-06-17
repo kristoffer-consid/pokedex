@@ -55,7 +55,7 @@ class DetailsViewModel @AssistedInject constructor(
             }
 
             // Get evolution chain
-            val evolutionId = result.getOrNull()?.id
+            val evolutionId = result.getOrNull()?.evolutionChain?.id
             if (evolutionId !== null) {
                 val result = PokeApi.getEvolutionChain(evolutionId)
                 viewModelState.update {
