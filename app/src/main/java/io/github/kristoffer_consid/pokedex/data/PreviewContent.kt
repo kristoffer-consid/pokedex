@@ -1,14 +1,9 @@
-package io.github.kristoffer_consid.pokedex.domain
+package io.github.kristoffer_consid.pokedex.data
 
 import co.pokeapi.pokekotlin.model.ApiResource
-import co.pokeapi.pokekotlin.model.ChainLink
-import co.pokeapi.pokekotlin.model.EvolutionChain
-import co.pokeapi.pokekotlin.model.EvolutionDetail
-import co.pokeapi.pokekotlin.model.EvolutionTrigger
 import co.pokeapi.pokekotlin.model.NamedApiResource
 import co.pokeapi.pokekotlin.model.PokemonSpecies
 import co.pokeapi.pokekotlin.model.PokemonSpeciesFlavorText
-import kotlin.collections.List
 
 val PreviewSpecies = PokemonSpecies(
     id = 1,
