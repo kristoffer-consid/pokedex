@@ -28,6 +28,10 @@ Welcome to the **Mini Pokédex** – a kid-friendly and parent-approved Android 
 
 ---
 
+There is also a debug built .apk file in the releases tab which can be installed on an Android device if you download the file
+
+---
+
 ## 📚 Tech Stack
 * **Hilt (Dependency Injection)**: Built on top of dagger to and makes it easier to handle dependency injection
 * **Compose Destinations**: A type-safe and simple way to handle screen navigation
