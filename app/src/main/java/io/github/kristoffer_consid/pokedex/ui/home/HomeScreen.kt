@@ -1,6 +1,7 @@
 package io.github.kristoffer_consid.pokedex.ui.home
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,6 +14,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.outlined.FavoriteBorder
@@ -31,6 +33,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,6 +49,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import co.pokeapi.pokekotlin.model.NamedApiResource
 import coil3.ColorImage
 import coil3.annotation.ExperimentalCoilApi
@@ -59,6 +63,9 @@ import com.ramcosta.composedestinations.annotation.RootGraph
 import com.ramcosta.composedestinations.generated.destinations.DetailsScreenDestination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import io.github.kristoffer_consid.pokedex.R
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.yield
 import org.apache.commons.text.similarity.JaroWinklerSimilarity
 
 const val FUZZY_THRESHOLD = 0.8
@@ -77,7 +84,10 @@ fun HomeScreen(navigator: DestinationsNavigator) {
     }
 
     if (uiState.isLoaded) {
-        HomeDisplay(uiState) { pokemonInfo ->
+        HomeDisplay(
+            uiState,
+            onRefreshRandomPokemon = { viewModel.refreshRandomPokemon() }
+        ) { pokemonInfo ->
             navigator.navigate(DetailsScreenDestination(pokemonInfo))
         }
     } else {
@@ -90,8 +100,11 @@ fun HomeScreen(navigator: DestinationsNavigator) {
 fun HomeDisplay(
     uiState: HomeUIState,
     modifier: Modifier = Modifier,
+    onRefreshRandomPokemon: () -> Unit = {},
     onClick: (NamedApiResource) -> Unit = {}
 ) {
+    var isRefreshing by remember { mutableStateOf(false) }
+    val refreshingScope = rememberCoroutineScope()
     var query by remember { mutableStateOf("") }
     var showFavorites by remember { mutableStateOf(false) }
     var pokemonList = uiState.pokemonList.filter {
@@ -120,14 +133,21 @@ fun HomeDisplay(
     }
 
     PullToRefreshBox(
-        isRefreshing = false,
-        onRefresh = {},
+        isRefreshing = isRefreshing,
+        onRefresh = {
+            refreshingScope.launch {
+                isRefreshing = true
+                onRefreshRandomPokemon()
+                delay(250L)
+                isRefreshing = false
+            }
+        },
         modifier = modifier
             .fillMaxSize()
             .padding(8.dp),
     ) {
         LazyVerticalGrid(
-            columns = GridCells.Fixed(4),
+            columns = GridCells.Fixed(3),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
